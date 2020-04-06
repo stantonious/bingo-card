@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bingo Card MNIST</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <style type="text/css">
+      .container {
+        max-width: 500px;
+        padding-top: 100px;
+      }
+
+    </style>
+</head>
+<body>
+<div class="container">
+    <table>
+      <tr>
+        <td>
+          <img src="./get_img/b.png" height="42" width="42">
+        </td>
+          <td>
+            <img src="./get_img/i.png" height="42" width="42">
+          </td>
+            <td>
+              <img src="./get_img/n.png" height="42" width="42">
+            </td>
+              <td>
+              <img src="./get_img/g.png" height="42" width="42">
+              </td>
+                <td>
+                <img src="./get_img/o.png" height="42" width="42">
+                </td>
+      </tr>
+        {% for c in numbers %}
+        <tr>
+            {% for r in c %}
+            <td>
+                <img src="./get_image?val={{ r }}&cmap={{ cmap }}" height="42" width="42">
+            </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+<script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+
+<form action="/get_card">
+  <p>Please select your Color:</p>
+    {% for c in colors %}
+  <input type="radio" id="{{ c }}" name="cmap" value="{{ c }}">
+  <label for="jet">{{c}}</label><br>
+  {% endfor %}
+
+  <br>
+<input type="submit" value="Submit">
+</form>
+</body>
+</html>
