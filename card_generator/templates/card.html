@@ -10,33 +10,36 @@
         padding-top: 100px;
       }
 
+
     </style>
 </head>
 <body>
 <div class="container">
     <table>
-      <tr>
-        <td>
-          <img src="./get_img/b.png" height="42" width="42">
-        </td>
-          <td>
-            <img src="./get_img/i.png" height="42" width="42">
-          </td>
+        <tr>
             <td>
-              <img src="./get_img/n.png" height="42" width="42">
+                <img src="./get_img/b.png" height="42" width="42">
             </td>
-              <td>
-              <img src="./get_img/g.png" height="42" width="42">
-              </td>
-                <td>
+            <td>
+                <img src="./get_img/i.png" height="42" width="42">
+            </td>
+            <td>
+                <img src="./get_img/n.png" height="42" width="42">
+            </td>
+            <td>
+                <img src="./get_img/g.png" height="42" width="42">
+            </td>
+            <td>
                 <img src="./get_img/o.png" height="42" width="42">
-                </td>
-      </tr>
+            </td>
+        </tr>
         {% for c in numbers %}
         <tr>
             {% for r in c %}
             <td>
-                <img src="./get_image?val={{ r }}&cmap={{ cmap }}" height="42" width="42">
+                <a href="/update_card?cmap={{ cmap }}&numbers={{ numbers }}&idxs={{ idxs }}&invert_number={{r[0]}}">
+                    <img src="./get_image?val={{ r[0] }}&invert={{ r[1] }}&cmap={{ cmap }}&idxs={{ idxs }}" height="42" width="42">
+                </a>
             </td>
             {% endfor %}
         </tr>
@@ -46,15 +49,37 @@
 <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
 <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
 
+{% if not  play  %}
 <form action="/get_card">
-  <p>Please select your Color:</p>
+    <p>Please select your Color:</p>
     {% for c in colors %}
-  <input type="radio" id="{{ c }}" name="cmap" value="{{ c }}">
-  <label for="jet">{{c}}</label><br>
-  {% endfor %}
 
-  <br>
-<input type="submit" value="Submit">
+    {% if c == cmap %}
+    <input type="radio" id="{{ c }}" name="cmap" value="{{ c }}" checked="1">
+    <label for="{{ c }}">{{ c }}</label><br>
+    {% else %}
+    <input type="radio" id="{{ c }}" name="cmap" value="{{ c }}">
+    <label for="{{ c }}">{{ c }}</label><br>
+    {% endif %}
+    {% endfor %}
+
+    <br>
+    <input type="checkbox" id="regen" name="regen" value="regen" >
+    <label for="regen"> Re-generate Numbers</label><br>
+    <input type="checkbox" id="play" name="play" value="1" >
+    <label for="play"> Play </label><br>
+    <input type="submit" value="Submit">
+    <input type="hidden" id="numbers" name="numbers" value="{{ numbers }}">
+    <input type="hidden" id="idxs" name="idxs" value="{{ idxs }}">
 </form>
+    {% else %}
+    <form action="/update_card">
+        <input type="hidden" id="cmap" name="cmap" value="{{ cmap }}">
+        <input type="hidden" id="numbers" name="numbers" value="{{ numbers }}">
+        <input type="hidden" id="idxs" name="idxs" value="{{ idxs }}">
+        <input type="hidden" id="clear" name="clear" value="1">
+        <input type="submit" value="Clear">
+    </form>
+{% endif %}
 </body>
 </html>

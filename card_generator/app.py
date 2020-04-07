@@ -8,6 +8,12 @@ import matplotlib.pyplot as plt
 app = Flask(__name__)
 
 
+B = [x for x in range(1, 16) if x not in [8]]
+I = [x for x in range(16,31) if x not in []]
+N = [x for x in range(31,46) if x not in [31,44]]
+G = [x for x in range(46,61) if x not in [44,45]]
+O = [x for x in range(61,76) if x not in [69]]
+
 def read_idx(filename):
     # https://gist.github.com/tylerneylon/ce60e8a06e7506ac45788443f7269e40
     with open(filename, 'rb') as f:
@@ -22,28 +28,17 @@ def read_labels(filename):
         return np.fromstring(f.read(), dtype=np.uint8)
 
 
-def get_random(val, d, l, skinny=3):
+def get_random(val, d, l, idxs, skinny=3):
     d_10, d_0 = divmod(val, 10)
-    r = np.squeeze(d[np.argwhere(l == d_0), ...])
-    idx = np.random.randint(0, r.shape[0])
-    r_10 = np.squeeze(d[np.argwhere(l == d_10), ...])
-    idx_10 = np.random.randint(0, r_10.shape[0])
-    r = np.concatenate((r_10[idx_10, :, :-skinny], r[idx, :, skinny:]), axis=-1)
+    r = ds[d_0][idxs[d_0], ...]
+    r_10 = ds[d_10][idxs[d_10], ...]
+    r = np.concatenate((r_10[:, :-skinny], r[:, skinny:]), axis=-1)
 
     # add border
     r[[0, -1], :] = 255
     r[:, [0, -1]] = 255
 
     return r
-
-
-def get_column(minmax, num, d, l, skinny):
-    r = []
-
-    for _n in sorted(random.sample(range(minmax[0], minmax[1] + 1), k=num)):
-        print(_n)
-        r.append(get_random(_n, d, l, skinny))
-    return np.asarray(r)
 
 
 def to_png(d, cmap='RdPu'):
@@ -53,12 +48,6 @@ def to_png(d, cmap='RdPu'):
     outf.seek(0)
     return outf
 
-
-B = (1, 15)
-I = (16, 30)
-N = (31, 45)
-G = (46, 60)
-O = (61, 75)
 
 colors = ['jet',
           'ocean',
@@ -74,28 +63,129 @@ def get_img(path):
     return send_from_directory('data', path)
 
 
+def get_idxs():
+    r = []
+
+    for _n in range(10):
+        r.append(np.random.randint(0, ds[_n].shape[0]))
+    return r
+
+
+def _decode_numbers2(numbers):
+    import re
+    n=re.sub(r'[\[\]]','',numbers)
+    n=re.sub(r'[ ]+',' ',n)
+
+    r=[]
+    for _n in n.strip().split(' '):
+        r.append(int(_n))
+
+    return np.asarray(r).reshape(5,5,2)
+
+
+def _decode_numbers(numbers):
+    r = []
+
+    if not numbers:
+        return None
+
+    for _i, _n in enumerate(numbers[1:-1].split('\n')):
+        _r = []
+        for _ii, _nn in enumerate(_n.strip()[1:-1].split(' ')):
+            try:
+                _r.append(int(_nn))
+            except:pass
+        r.append(np.asarray(_r))
+    return np.asarray(r,)
+
+
+@app.route("/update_card")
+def update_card():
+    cmap = request.args.get('cmap', 'Oranges')
+    clear = request.args.get('clear', None)
+    numbers = request.args.get('numbers')
+    numbers = _decode_numbers2(numbers)
+    idxs = [int(x) for x in request.args.get('idxs')[1:-1].split(',')]
+
+
+    if clear:
+        state = np.full((5, 5), -1)
+        numbers=numbers[...,0]
+        numbers=np.stack((numbers,state),-1)
+        return render_template('card.html',
+                               numbers=numbers,
+                               idxs=idxs,
+                               cmap=cmap,
+                               colors=colors,
+                               play=True)
+
+    invert_number=request.args.get('invert_number',None)
+
+    if invert_number:
+        print (invert_number)
+        invert_number=int(invert_number)
+        s_idxs = np.argwhere(numbers[...,0]==invert_number)[0]
+        numbers[s_idxs[0],s_idxs[1],1]*=-1
+    return render_template('card.html',
+                           numbers=numbers,
+                           idxs=idxs,
+                           cmap=cmap,
+                           colors=colors,
+                           play=True)
+
 @app.route("/get_card")
 def get_card():
-    cmap = request.args.get('cmap', 'RdPu')
-    vals = [
-        sorted(random.sample(range(1, 15), k=5)),
-        sorted(random.sample(range(16, 30), k=5)),
-        sorted(random.sample(range(31, 45), k=5)),
-        sorted(random.sample(range(45, 60), k=5)),
-        sorted(random.sample(range(61, 75), k=5)),
-    ]
+    cmap = request.args.get('cmap', 'Oranges')
+    numbers = request.args.get('numbers')
+    regen = request.args.get('regen',None)
+    play = request.args.get('play',False)
+    state=request.args.get('state',None)
 
-    vals = np.asarray(vals)
-    vals = vals.T
+    state = _decode_numbers(state) if state else np.full((5,5),-1)
+    if numbers and not regen:
+        vals = _decode_numbers2(numbers)
+        idxs = [int(x) for x in request.args.get('idxs')[1:-1].split(',')]
+    else:
+        idxs = get_idxs()
 
-    return render_template('card.html', numbers=vals, cmap=cmap, colors=colors)
+        vals = [
+            sorted(random.sample(B, k=5)),
+            sorted(random.sample(I, k=5)),
+            sorted(random.sample(N, k=5)),
+            sorted(random.sample(G,k=5)),
+            sorted(random.sample(O, k=5)),
+        ]
+
+        vals = np.asarray(vals)
+        vals = vals.T
+
+        vals[2, 2] = -1
+        vals=np.stack((vals,state),axis=-1)
+    return render_template('card.html',
+                           numbers=vals,
+                           idxs=idxs,
+                           state=state,
+                           cmap=cmap,
+                           colors=colors,
+                           play=play)
 
 
 @app.route("/get_image")
 def get_image():
     val = int(request.args.get('val'))
+    idxs = [int(x) for x in request.args.get('idxs')[1:-1].split(',')]
+    invert = int(request.args.get('invert',-1))
+
+    if val < 0:
+        return send_from_directory('data', 'free.png')
+
     cmap = request.args.get('cmap', 'RdPu')
-    bits = get_random(val, d, l, skinny=4)
+
+    if invert == 1:
+        cmap+='_r'
+        print ('invert',cmap)
+    bits = get_random(val, d, l, idxs=idxs, skinny=4)
+    print('cmap', cmap)
     return send_file(to_png(bits, cmap), mimetype='image/png')
 
 
@@ -106,6 +196,18 @@ def template_test():
 
 d = read_idx(pkg_resources.resource_filename(__name__, 'data/t10k-images-idx3-ubyte'))
 l = read_idx(pkg_resources.resource_filename(__name__, 'data/t10k-labels-idx1-ubyte'))
+ds = dict()
+ds[0] = np.squeeze(d[np.argwhere(l == 0), ...])
+ds[1] = np.squeeze(d[np.argwhere(l == 1), ...])
+ds[2] = np.squeeze(d[np.argwhere(l == 2), ...])
+ds[3] = np.squeeze(d[np.argwhere(l == 3), ...])
+ds[4] = np.squeeze(d[np.argwhere(l == 4), ...])
+ds[5] = np.squeeze(d[np.argwhere(l == 5), ...])
+ds[6] = np.squeeze(d[np.argwhere(l == 6), ...])
+ds[7] = np.squeeze(d[np.argwhere(l == 7), ...])
+ds[8] = np.squeeze(d[np.argwhere(l == 8), ...])
+ds[9] = np.squeeze(d[np.argwhere(l == 9), ...])
+d = None
 
 if __name__ == '__main__':
     app.run(debug=True)
