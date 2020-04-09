@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
     <title>Bingo Card MNIST</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
     <style type="text/css">
       .container {
         max-width: 500px;
@@ -11,75 +14,145 @@
       }
 
 
+
+
     </style>
+    <script type='text/javascript' async="True">
+
+ $(document).on(
+   'click',
+   '#cmap',
+   function() {
+   $.ajax("/get_card_only",{
+   data: JSON.stringify({
+     "cmap": $(this).val(),
+     "numbers": $("#h_numbers").val(),
+     "clear": $("#h_clear").val(),
+     "idxs": $("#h_idxs").val(),
+   }),
+   contentType:'application/json',
+   type:'POST',
+   success:function(response){
+       $('#card').html(response);
+      }
+   });
+  });
+
+ $(document).on(
+ 'click',
+ 'img#x',
+ function() {
+   $.ajax("/get_card_only",{
+   data: JSON.stringify({
+     "cmap": $("#h_cmap").val(),
+     "numbers": $("#h_numbers").val(),
+     "clear": $("#h_clear").val(),
+     "idxs": $("#h_idxs").val(),
+     "invert_number": $(this).attr("alt"),
+   }
+   ),
+   contentType:'application/json',
+   type:'POST',
+   success:function(response){
+       $('#card').html(response);
+      }
+
+   });
+});
+
+ $(document).on(
+ 'click',
+ 'button#clear',
+ function() {
+   $.ajax("/get_card_only",{
+   data: JSON.stringify({
+     "cmap": $("#h_cmap").val(),
+     "numbers": $("#h_numbers").val(),
+     "clear": $("#h_clear").val(),
+     "idxs": $("#h_idxs").val(),
+     "invert_number": $(this).attr("alt"),
+     "clear":"1",
+   }
+   ),
+   contentType:'application/json',
+   type:'POST',
+   success:function(response){
+       $('#card').html(response);
+      }
+
+   });
+});
+
+ $(document).on(
+ 'click',
+ 'button#play',
+ function() {
+   $('#colors').html('');
+});
+    </script>
+
 </head>
 <body>
-<div class="container">
-    <table>
-        <tr>
-            <td>
-                <img src="./get_img/b.png" height="42" width="42">
-            </td>
-            <td>
-                <img src="./get_img/i.png" height="42" width="42">
-            </td>
-            <td>
-                <img src="./get_img/n.png" height="42" width="42">
-            </td>
-            <td>
-                <img src="./get_img/g.png" height="42" width="42">
-            </td>
-            <td>
-                <img src="./get_img/o.png" height="42" width="42">
-            </td>
-        </tr>
-        {% for c in numbers %}
-        <tr>
-            {% for r in c %}
-            <td>
-                <a href="/update_card?cmap={{ cmap }}&numbers={{ numbers }}&idxs={{ idxs }}&invert_number={{r[0]}}">
-                    <img src="./get_image?val={{ r[0] }}&invert={{ r[1] }}&cmap={{ cmap }}&idxs={{ idxs }}" height="42" width="42">
-                </a>
-            </td>
-            {% endfor %}
-        </tr>
-        {% endfor %}
-    </table>
-</div>
-<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
-<script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+<center>
 
-{% if not  play  %}
-<form action="/get_card">
+    <div id="card" class="container">
+        <input type="hidden" id="h_cmap" value="{{ cmap }}">
+        <input type="hidden" id="h_numbers" value="{{ numbers }}">
+        <input type="hidden" id="h_clear" value="{{ clear }}">
+        <input type="hidden" id="h_idxs" value="{{ idxs }}">
+        <table>
+            <tr>
+                <td>
+                    <img src="./get_img/b.png" height="42" width="42">
+                </td>
+                <td>
+                    <img src="./get_img/i.png" height="42" width="42">
+                </td>
+                <td>
+                    <img src="./get_img/n.png" height="42" width="42">
+                </td>
+                <td>
+                    <img src="./get_img/g.png" height="42" width="42">
+                </td>
+                <td>
+                    <img src="./get_img/o.png" height="42" width="42">
+                </td>
+            </tr>
+            {% for c in numbers %}
+            <tr>
+                {% for r in c %}
+                <td>
+                    <img id="x" src="./get_image?val={{ r[0] }}&invert={{ r[1] }}&cmap={{ cmap }}&idxs={{ idxs }}"
+                         height="42" width="42" alt="{{ r[0] }}">
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <div id="colors">
+
     <p>Please select your Color:</p>
     {% for c in colors %}
 
     {% if c == cmap %}
-    <input type="radio" id="{{ c }}" name="cmap" value="{{ c }}" checked="1">
+    <input type="radio" id="cmap" name="cmap" value="{{ c }}" checked="1">
     <label for="{{ c }}">{{ c }}</label><br>
     {% else %}
-    <input type="radio" id="{{ c }}" name="cmap" value="{{ c }}">
+    <input type="radio" id="cmap" name="cmap" value="{{ c }}">
     <label for="{{ c }}">{{ c }}</label><br>
     {% endif %}
     {% endfor %}
+    </div>
+
 
     <br>
-    <input type="checkbox" id="regen" name="regen" value="regen" >
-    <label for="regen"> Re-generate Numbers</label><br>
-    <input type="checkbox" id="play" name="play" value="1" >
-    <label for="play"> Play </label><br>
-    <input type="submit" value="Submit">
-    <input type="hidden" id="numbers" name="numbers" value="{{ numbers }}">
-    <input type="hidden" id="idxs" name="idxs" value="{{ idxs }}">
-</form>
-    {% else %}
-    <form action="/update_card">
+    <button id="clear">Clear</button>
+    <button id="play">Play</button>
+    <form action="/get_card">
         <input type="hidden" id="cmap" name="cmap" value="{{ cmap }}">
-        <input type="hidden" id="numbers" name="numbers" value="{{ numbers }}">
-        <input type="hidden" id="idxs" name="idxs" value="{{ idxs }}">
-        <input type="hidden" id="clear" name="clear" value="1">
-        <input type="submit" value="Clear">
+        <input type="submit" value="New Card">
     </form>
-{% endif %}
+</center>
 </body>
 </html>

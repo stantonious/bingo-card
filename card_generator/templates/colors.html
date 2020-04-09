@@ -1,0 +1,12 @@
+        <p>Please select your Color:</p>
+        {% for c in colors %}
+
+        {% if c == cmap %}
+        <input type="radio" id="cmap" name="cmap" value="{{ c }}" checked="1">
+        <label for="{{ c }}">{{ c }}</label><br>
+        {% else %}
+        <input type="radio" id="cmap" name="cmap" value="{{ c }}">
+        <label for="{{ c }}">{{ c }}</label><br>
+        {% endif %}
+        {% endfor %}
+

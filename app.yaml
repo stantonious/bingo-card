@@ -1,0 +1,11 @@
+runtime: python37
+
+service: bingo
+
+handlers:
+- url: /.*
+  script: auto
+
+entrypoint: gunicorn -b :$PORT card_generator.app:app --timeout 600
+
+

@@ -1,0 +1,33 @@
+<input type="hidden" id="h_cmap" value="{{ cmap }}" >
+<input type="hidden" id="h_numbers" value="{{ numbers }}" >
+<input type="hidden" id="h_clear" value="{{ clear }}" >
+<input type="hidden" id="h_idxs" value="{{ idxs }}" >
+    <table>
+        <tr>
+            <td>
+                <img src="./get_img/b.png" height="42" width="42">
+            </td>
+            <td>
+                <img src="./get_img/i.png" height="42" width="42">
+            </td>
+            <td>
+                <img src="./get_img/n.png" height="42" width="42">
+            </td>
+            <td>
+                <img src="./get_img/g.png" height="42" width="42">
+            </td>
+            <td>
+                <img src="./get_img/o.png" height="42" width="42">
+            </td>
+        </tr>
+        {% for c in numbers %}
+        <tr>
+            {% for r in c %}
+            <td>
+                <img id="x" src="./get_image?val={{ r[0] }}&invert={{ r[1] }}&cmap={{ cmap }}&idxs={{ idxs }}"
+                     height="42" width="42" alt="{{ r[0] }}">
+            </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>

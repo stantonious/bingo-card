@@ -99,75 +99,77 @@ def _decode_numbers(numbers):
     return np.asarray(r,)
 
 
-@app.route("/update_card")
-def update_card():
-    cmap = request.args.get('cmap', 'Oranges')
-    clear = request.args.get('clear', None)
-    numbers = request.args.get('numbers')
+@app.route("/get_card_only",methods=['POST'])
+def get_card_only():
+    cmap = request.json.get('cmap', 'Oranges')
+    numbers = request.json.get('numbers',None)
+    idxs = [int(x) for x in request.json.get('idxs')[1:-1].split(',')]
+    invert_number=request.json.get('invert_number',None)
+    clear=request.json.get('clear',None)
+
+    if not numbers:
+        numbers = get_new_numbers()
+
     numbers = _decode_numbers2(numbers)
-    idxs = [int(x) for x in request.args.get('idxs')[1:-1].split(',')]
+    if invert_number:
+        invert_number = int(invert_number)
+        s_idxs = np.argwhere(numbers[..., 0] == invert_number)[0]
+        numbers[s_idxs[0], s_idxs[1], 1] *= -1
 
 
     if clear:
         state = np.full((5, 5), -1)
         numbers=numbers[...,0]
         numbers=np.stack((numbers,state),-1)
-        return render_template('card.html',
-                               numbers=numbers,
-                               idxs=idxs,
-                               cmap=cmap,
-                               colors=colors,
-                               play=True)
-
-    invert_number=request.args.get('invert_number',None)
-
-    if invert_number:
-        print (invert_number)
-        invert_number=int(invert_number)
-        s_idxs = np.argwhere(numbers[...,0]==invert_number)[0]
-        numbers[s_idxs[0],s_idxs[1],1]*=-1
-    return render_template('card.html',
+    return render_template('card_only.html',
                            numbers=numbers,
                            idxs=idxs,
                            cmap=cmap,
-                           colors=colors,
-                           play=True)
+                           )
 
-@app.route("/get_card")
+def get_new_numbers():
+    state=np.full((5,5,),-1)
+
+    vals = [
+        sorted(random.sample(B, k=5)),
+        sorted(random.sample(I, k=5)),
+        sorted(random.sample(N, k=5)),
+        sorted(random.sample(G, k=5)),
+        sorted(random.sample(O, k=5)),
+    ]
+
+    vals = np.asarray(vals)
+    vals = vals.T
+
+    vals[2, 2] = -1
+    vals = np.stack((vals, state), axis=-1)
+
+    return vals
+
+
+@app.route("/get_card",methods=['GET','POST'])
 def get_card():
-    cmap = request.args.get('cmap', 'Oranges')
-    numbers = request.args.get('numbers')
-    regen = request.args.get('regen',None)
-    play = request.args.get('play',False)
-    state=request.args.get('state',None)
+    if request.json:
+        cmap = request.json.get('cmap', 'Oranges')
+        numbers = request.json.get('numbers',None)
+        regen = request.json.get('regen',None)
+    else:
+        cmap = 'Oranges'
+        numbers = None
+        regen = None
 
-    state = _decode_numbers(state) if state else np.full((5,5),-1)
     if numbers and not regen:
         vals = _decode_numbers2(numbers)
-        idxs = [int(x) for x in request.args.get('idxs')[1:-1].split(',')]
+        idxs = [int(x) for x in request.json.get('idxs')[1:-1].split(',')]
     else:
         idxs = get_idxs()
+        vals=get_new_numbers()
 
-        vals = [
-            sorted(random.sample(B, k=5)),
-            sorted(random.sample(I, k=5)),
-            sorted(random.sample(N, k=5)),
-            sorted(random.sample(G,k=5)),
-            sorted(random.sample(O, k=5)),
-        ]
-
-        vals = np.asarray(vals)
-        vals = vals.T
-
-        vals[2, 2] = -1
-        vals=np.stack((vals,state),axis=-1)
     return render_template('card.html',
                            numbers=vals,
                            idxs=idxs,
-                           state=state,
                            cmap=cmap,
-                           colors=colors,
-                           play=play)
+                           colors=colors,)
 
 
 @app.route("/get_image")
