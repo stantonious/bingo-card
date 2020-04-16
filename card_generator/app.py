@@ -128,7 +128,7 @@ def _decode_numbers(numbers):
 def get_card_only():
     cmap = request.json.get('cmap', 'Oranges')
     numbers = request.json.get('numbers', None)
-    idxs = [int(x) for x in request.json.get('idxs')[1:-1].split(',')]
+    idxs = [int(x) for x in request.json.get('idxs')[1:-1].split(',')] if 'idxs' in request.json else get_idxs()
     invert_number = request.json.get('invert_number', None)
     clear = request.json.get('clear', None)
 

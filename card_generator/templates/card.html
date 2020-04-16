@@ -41,26 +41,6 @@
   });
 
  $(document).on(
-   'click',
-   '#clear',
-   function() {
-   $.ajax("/get_card_only",{
-   data: JSON.stringify({
-     "cmap": $("#h_cmap").val(),
-     "numbers": $("#h_numbers").val(),
-     "clear": $("#h_clear").val(),
-     "idxs": $("#h_idxs").val(),
-   }),
-   contentType:'application/json',
-   type:'POST',
-   success:function(response){
-       $('#card').html(response);
-      }
-   });
-  });
-
-
- $(document).on(
  'click',
  'img#x',
  function() {
@@ -127,6 +107,24 @@
 
  $(document).on(
  'click',
+ 'button#font',
+ function() {
+   $.ajax("/get_card_only",{
+   data: JSON.stringify({
+     "cmap": $("#h_cmap").val(),
+     "numbers": $("#h_numbers").val(),
+   }
+   ),
+   contentType:'application/json',
+   type:'POST',
+   success:function(response){
+       $('#card').html(response);
+      }
+   });
+});
+
+ $(document).on(
+ 'click',
  'button#play',
  function() {
    $('#colors').html('');
@@ -186,9 +184,11 @@
 
     <br>
     <button id="clear">Clear</button>
+    <button id="font">Change Font</button>
     <br>
     <br>
-    <button id="new">New Card</button>
+    <button id="new">New Numbers</button>
+    <br>
 </center>
 </body>
 </html>
