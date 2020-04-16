@@ -16,6 +16,7 @@
 
 
 
+
     </style>
     <script type='text/javascript' async="True">
 
@@ -23,6 +24,7 @@
    'click',
    '#cmap',
    function() {
+   $("#h_cmap").val($(this).val());
    $.ajax("/get_card_only",{
    data: JSON.stringify({
      "cmap": $(this).val(),
@@ -37,6 +39,26 @@
       }
    });
   });
+
+ $(document).on(
+   'click',
+   '#clear',
+   function() {
+   $.ajax("/get_card_only",{
+   data: JSON.stringify({
+     "cmap": $("#h_cmap").val(),
+     "numbers": $("#h_numbers").val(),
+     "clear": $("#h_clear").val(),
+     "idxs": $("#h_idxs").val(),
+   }),
+   contentType:'application/json',
+   type:'POST',
+   success:function(response){
+       $('#card').html(response);
+      }
+   });
+  });
+
 
  $(document).on(
  'click',
@@ -85,10 +107,31 @@
 
  $(document).on(
  'click',
+ 'button#new',
+ function() {
+   $.ajax("/get_card_only",{
+   data: JSON.stringify({
+     "cmap": $("#h_cmap").val(),
+     "idxs": $("#h_idxs").val(),
+     "clear":"1",
+   }
+   ),
+   contentType:'application/json',
+   type:'POST',
+   success:function(response){
+       $('#card').html(response);
+      }
+
+   });
+});
+
+ $(document).on(
+ 'click',
  'button#play',
  function() {
    $('#colors').html('');
 });
+
     </script>
 
 </head>
@@ -132,27 +175,20 @@
     </div>
     <div id="colors">
 
-    <p>Please select your Color:</p>
-    {% for c in colors %}
-
-    {% if c == cmap %}
-    <input type="radio" id="cmap" name="cmap" value="{{ c }}" checked="1">
-    <label for="{{ c }}">{{ c }}</label><br>
-    {% else %}
-    <input type="radio" id="cmap" name="cmap" value="{{ c }}">
-    <label for="{{ c }}">{{ c }}</label><br>
-    {% endif %}
-    {% endfor %}
+        <p>Please select your Color:</p>
+        <select id="cmap">
+            {% for c in colors %}
+            <option value="{{ c }}">{{ c }}</option>
+            {% endfor %}
+        </select>
     </div>
 
 
     <br>
     <button id="clear">Clear</button>
-    <button id="play">Play</button>
-    <form action="/get_card">
-        <input type="hidden" id="cmap" name="cmap" value="{{ cmap }}">
-        <input type="submit" value="New Card">
-    </form>
+    <br>
+    <br>
+    <button id="new">New Card</button>
 </center>
 </body>
 </html>

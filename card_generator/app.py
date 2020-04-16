@@ -8,11 +8,17 @@ import matplotlib.pyplot as plt
 app = Flask(__name__)
 
 IGNORE = [8, 31, 44, 45, 69]
-B = [x for x in range(1, 16) if x not in IGNORE]
-I = [x for x in range(16, 31) if x not in IGNORE]
-N = [x for x in range(31, 46) if x not in IGNORE]
-G = [x for x in range(46, 61) if x not in IGNORE]
-O = [x for x in range(61, 76) if x not in IGNORE]
+
+
+def _generate_bingo_numbers(ignore=None):
+    ignore = ignore or []
+    B = [x for x in range(1, 16) if x not in ignore]
+    I = [x for x in range(16, 31) if x not in ignore]
+    N = [x for x in range(31, 46) if x not in ignore]
+    G = [x for x in range(46, 61) if x not in ignore]
+    O = [x for x in range(61, 76) if x not in ignore]
+
+    return B, I, N, G, O
 
 
 def read_idx(filename):
@@ -50,12 +56,29 @@ def to_png(d, cmap='RdPu'):
     return outf
 
 
-colors = ['jet',
-          'ocean',
-          'inferno',
-          'Greys', 'Purples', 'Blues', 'Greens', 'Oranges', 'Reds',
-          'YlOrBr', 'YlOrRd', 'OrRd', 'PuRd', 'RdPu', 'BuPu',
-          'GnBu', 'PuBu', 'YlGnBu', 'PuBuGn', 'BuGn', 'YlGn']
+colors = [
+    'YlGnBu',
+    'jet',
+    'ocean',
+    'inferno',
+    'Greys',
+    'Purples',
+    'Blues',
+    'Greens',
+    'Oranges',
+    'Reds',
+    'YlOrBr',
+    'YlOrRd',
+    'OrRd',
+    'PuRd',
+    'RdPu',
+    'BuPu',
+    'GnBu',
+    'PuBu',
+    'YlGnBu',
+    'PuBuGn',
+    'BuGn',
+    'YlGn']
 
 
 @app.route("/get_img/<path:path>")
@@ -111,8 +134,8 @@ def get_card_only():
 
     if not numbers:
         numbers = get_new_numbers()
-
-    numbers = _decode_numbers2(numbers)
+    else:
+        numbers = _decode_numbers2(numbers)
     if invert_number:
         invert_number = int(invert_number)
         s_idxs = np.argwhere(numbers[..., 0] == invert_number)[0]
@@ -129,8 +152,10 @@ def get_card_only():
                            )
 
 
-def get_new_numbers():
+def get_new_numbers(ignore=None):
     state = np.full((5, 5,), -1)
+
+    B, I, N, G, O = _generate_bingo_numbers(ignore)
 
     vals = [
         random.sample(B, k=5),
@@ -149,16 +174,46 @@ def get_new_numbers():
     return vals
 
 
-@app.route("/get_card", methods=['GET', 'POST'])
+@app.route("/", methods=['GET'])
+@app.route("/get_card", methods=['GET'])
+def get_card_get():
+    cmap = request.args.get('cmap', 'Oranges')
+    numbers = request.args.get('numbers', None)
+    regen = request.args.get('regen', None)
+    ignore = request.args.getlist('ignore', None)
+
+    if ignore and len(ignore) == 1 and ',' in ignore[0]:
+        ignore = ignore[0].split(',')
+
+    if ignore:
+        ignore = [int(_n) for _n in ignore]
+
+    if numbers and not regen:
+        vals = _decode_numbers2(numbers)
+        idxs = [int(x) for x in request.json.get('idxs')[1:-1].split(',')]
+    else:
+        idxs = get_idxs()
+        vals = get_new_numbers(ignore=ignore)
+
+    return render_template('card.html',
+                           numbers=vals,
+                           idxs=idxs,
+                           cmap=cmap,
+                           colors=colors, )
+
+
+@app.route("/get_card", methods=['POST'])
 def get_card():
     if request.json:
         cmap = request.json.get('cmap', 'Oranges')
         numbers = request.json.get('numbers', None)
         regen = request.json.get('regen', None)
+        ignore = request.json.get('ignore', None)
     else:
         cmap = 'Oranges'
         numbers = None
         regen = None
+        ignore = None
 
     if numbers and not regen:
         vals = _decode_numbers2(numbers)
