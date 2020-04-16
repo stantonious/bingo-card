@@ -7,12 +7,13 @@ import matplotlib.pyplot as plt
 
 app = Flask(__name__)
 
+IGNORE = [8, 31, 44, 45, 69]
+B = [x for x in range(1, 16) if x not in IGNORE]
+I = [x for x in range(16, 31) if x not in IGNORE]
+N = [x for x in range(31, 46) if x not in IGNORE]
+G = [x for x in range(46, 61) if x not in IGNORE]
+O = [x for x in range(61, 76) if x not in IGNORE]
 
-B = [x for x in range(1, 16) if x not in [8]]
-I = [x for x in range(16,31) if x not in []]
-N = [x for x in range(31,46) if x not in [31,44]]
-G = [x for x in range(46,61) if x not in [44,45]]
-O = [x for x in range(61,76) if x not in [69]]
 
 def read_idx(filename):
     # https://gist.github.com/tylerneylon/ce60e8a06e7506ac45788443f7269e40
@@ -73,14 +74,14 @@ def get_idxs():
 
 def _decode_numbers2(numbers):
     import re
-    n=re.sub(r'[\[\]]','',numbers)
-    n=re.sub(r'[ ]+',' ',n)
+    n = re.sub(r'[\[\]]', '', numbers)
+    n = re.sub(r'[ ]+', ' ', n)
 
-    r=[]
+    r = []
     for _n in n.strip().split(' '):
         r.append(int(_n))
 
-    return np.asarray(r).reshape(5,5,2)
+    return np.asarray(r).reshape(5, 5, 2)
 
 
 def _decode_numbers(numbers):
@@ -94,18 +95,19 @@ def _decode_numbers(numbers):
         for _ii, _nn in enumerate(_n.strip()[1:-1].split(' ')):
             try:
                 _r.append(int(_nn))
-            except:pass
+            except:
+                pass
         r.append(np.asarray(_r))
-    return np.asarray(r,)
+    return np.asarray(r, )
 
 
-@app.route("/get_card_only",methods=['POST'])
+@app.route("/get_card_only", methods=['POST'])
 def get_card_only():
     cmap = request.json.get('cmap', 'Oranges')
-    numbers = request.json.get('numbers',None)
+    numbers = request.json.get('numbers', None)
     idxs = [int(x) for x in request.json.get('idxs')[1:-1].split(',')]
-    invert_number=request.json.get('invert_number',None)
-    clear=request.json.get('clear',None)
+    invert_number = request.json.get('invert_number', None)
+    clear = request.json.get('clear', None)
 
     if not numbers:
         numbers = get_new_numbers()
@@ -116,26 +118,26 @@ def get_card_only():
         s_idxs = np.argwhere(numbers[..., 0] == invert_number)[0]
         numbers[s_idxs[0], s_idxs[1], 1] *= -1
 
-
     if clear:
         state = np.full((5, 5), -1)
-        numbers=numbers[...,0]
-        numbers=np.stack((numbers,state),-1)
+        numbers = numbers[..., 0]
+        numbers = np.stack((numbers, state), -1)
     return render_template('card_only.html',
                            numbers=numbers,
                            idxs=idxs,
                            cmap=cmap,
                            )
 
+
 def get_new_numbers():
-    state=np.full((5,5,),-1)
+    state = np.full((5, 5,), -1)
 
     vals = [
-        sorted(random.sample(B, k=5)),
-        sorted(random.sample(I, k=5)),
-        sorted(random.sample(N, k=5)),
-        sorted(random.sample(G, k=5)),
-        sorted(random.sample(O, k=5)),
+        random.sample(B, k=5),
+        random.sample(I, k=5),
+        random.sample(N, k=5),
+        random.sample(G, k=5),
+        random.sample(O, k=5),
     ]
 
     vals = np.asarray(vals)
@@ -147,12 +149,12 @@ def get_new_numbers():
     return vals
 
 
-@app.route("/get_card",methods=['GET','POST'])
+@app.route("/get_card", methods=['GET', 'POST'])
 def get_card():
     if request.json:
         cmap = request.json.get('cmap', 'Oranges')
-        numbers = request.json.get('numbers',None)
-        regen = request.json.get('regen',None)
+        numbers = request.json.get('numbers', None)
+        regen = request.json.get('regen', None)
     else:
         cmap = 'Oranges'
         numbers = None
@@ -163,20 +165,20 @@ def get_card():
         idxs = [int(x) for x in request.json.get('idxs')[1:-1].split(',')]
     else:
         idxs = get_idxs()
-        vals=get_new_numbers()
+        vals = get_new_numbers()
 
     return render_template('card.html',
                            numbers=vals,
                            idxs=idxs,
                            cmap=cmap,
-                           colors=colors,)
+                           colors=colors, )
 
 
 @app.route("/get_image")
 def get_image():
     val = int(request.args.get('val'))
     idxs = [int(x) for x in request.args.get('idxs')[1:-1].split(',')]
-    invert = int(request.args.get('invert',-1))
+    invert = int(request.args.get('invert', -1))
 
     if val < 0:
         return send_from_directory('data', 'free.png')
@@ -184,8 +186,8 @@ def get_image():
     cmap = request.args.get('cmap', 'RdPu')
 
     if invert == 1:
-        cmap+='_r'
-        print ('invert',cmap)
+        cmap += '_r'
+        print('invert', cmap)
     bits = get_random(val, d, l, idxs=idxs, skinny=4)
     print('cmap', cmap)
     return send_file(to_png(bits, cmap), mimetype='image/png')
