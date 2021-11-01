@@ -1,6 +1,6 @@
 runtime: python37
 
-service: bingo
+service: default
 
 handlers:
 - url: /.*
