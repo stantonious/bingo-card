@@ -7,5 +7,5 @@ A javascript based bingo card generator.  bingo-card allows people to :
  - mark spots on the bingo card.  
  
 An example can be found here:
-https://bingo-dot-sound-scene.uc.r.appspot.com/
+https://mnist-bingo.uc.r.appspot.com/
 
